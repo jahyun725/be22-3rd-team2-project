@@ -95,41 +95,44 @@ const toggleMember = (email) => {
   }
 };
 
-const handleSave = () => {
-  if (!formData.value.title.trim()) {
-    alert('보드 제목을 입력해주세요.');
-    return;
-  }
-  
-  // 생성자를 selectedMembers에 자동으로 포함 (중복 체크)
-  const membersToInclude = selectedMembers.value.includes(props.currentUserEmail)
-    ? selectedMembers.value
-    : [props.currentUserEmail, ...selectedMembers.value];
-  
-  // 선택된 멤버를 BoardMember 형식으로 변환
-  const members = membersToInclude
-    .map((email) => {
-      const user = props.availableUsers.find((u) => u.email === email);
-      if (!user) return null;
-      
-      return {
-        id: `member${Date.now()}_${email}`,
-        name: user.name,
-        email: user.email,
-        avatar: user.avatar,
-        role: email === props.currentUserEmail ? 'owner' : 'member',
-        addedAt: new Date(),
-      };
-    })
-    .filter(Boolean);
-  
-  emit('save', {
-    ...formData.value,
-    members,
-    memberCount: members.length,
-    updatedAt: new Date(),
-  });
-};
+  const showTitleError = ref(false);
+
+  const handleSave = () => {
+    if (!formData.value.title.trim()) {
+      showTitleError.value = true;
+      return;
+    }
+    showTitleError.value = false;
+    
+    // 생성자를 selectedMembers에 자동으로 포함 (중복 체크)
+    const membersToInclude = selectedMembers.value.includes(props.currentUserEmail)
+      ? selectedMembers.value
+      : [props.currentUserEmail, ...selectedMembers.value];
+    
+    // 선택된 멤버를 BoardMember 형식으로 변환
+    const members = membersToInclude
+      .map((email) => {
+        const user = props.availableUsers.find((u) => u.email === email);
+        if (!user) return null;
+        
+        return {
+          id: `member${Date.now()}_${email}`,
+          name: user.name,
+          email: user.email,
+          avatar: user.avatar,
+          role: email === props.currentUserEmail ? 'owner' : 'member',
+          addedAt: new Date(),
+        };
+      })
+      .filter(Boolean);
+    
+    emit('save', {
+      ...formData.value,
+      members,
+      memberCount: members.length,
+      updatedAt: new Date(),
+    });
+  };
 </script>
 
 <template>
@@ -155,8 +158,11 @@ const handleSave = () => {
             v-model="formData.title"
             type="text"
             placeholder="제목을 입력하세요"
-            class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+            :class="showTitleError ? 'border-red-500 focus:ring-red-200' : 'border-gray-200'"
+            @input="showTitleError = false"
           />
+          <p v-if="showTitleError" class="text-sm text-red-500 mt-1">보드 제목을 입력해주세요.</p>
         </div>
 
         <div>

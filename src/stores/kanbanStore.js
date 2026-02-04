@@ -10,8 +10,6 @@ import {
   getAllRegisteredUsers,
 } from '../utils/auth';
 import {
-  fetchBoards,
-  fetchTasks,
   fetchLogs,
   createBoard,
   updateBoard as updateBoardApi,
@@ -49,6 +47,18 @@ export const useKanbanStore = defineStore('kanban', {
     },
   },
   actions: {
+    checkBoardAccess(boardId) {
+      const board = this.boards.find((b) => b.id === boardId);
+      if (!board) return { allowed: false, error: '보드를 찾을 수 없습니다.' };
+      
+      const isCreator = board.createdBy === this.currentUser?.email;
+      const isMember = board.members?.some((member) => member.email === this.currentUser?.email);
+      
+      if (!isCreator && !isMember) {
+        return { allowed: false, error: '이 보드에 접근할 권한이 없습니다.' };
+      }
+      return { allowed: true, board };
+    },
     async initialize() {
       initializeAuth();
       const user = getCurrentUser();

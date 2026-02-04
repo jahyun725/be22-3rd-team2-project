@@ -130,7 +130,7 @@ const getColumnLabel = (column) => {
           />
         </div>
         <button
-          v-if="currentView === 'dashboard'"
+          v-if="viewType === 'dashboard'"
           @click="emit('createBoard')"
           class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
@@ -140,7 +140,7 @@ const getColumnLabel = (column) => {
       </div>
 
       <!-- 대시보드 뷰 - 모든 보드 -->
-      <div v-if="currentView === 'dashboard'">
+      <div v-if="viewType === 'dashboard'">
         <h2 class="font-semibold text-gray-900 mb-4">모든 보드</h2>
         
         <div v-if="filteredBoards.length === 0" class="bg-white rounded-lg border border-gray-200 p-12 text-center">
@@ -181,7 +181,7 @@ const getColumnLabel = (column) => {
       </div>
 
       <!-- 나에게 할당된 업무 뷰 -->
-      <div v-if="currentView === 'myTasks'">
+      <div v-if="viewType === 'myTasks'">
         <h2 class="font-semibold text-gray-900 mb-4">
           내 업무 <span class="text-gray-500">({{ filteredMyTasks.length }}개)</span>
         </h2>
@@ -268,7 +268,7 @@ const getColumnLabel = (column) => {
       </div>
 
       <!-- 즐겨찾기 뷰 -->
-      <div v-if="currentView === 'favorites'">
+      <div v-if="viewType === 'favorites'">
         <h2 class="font-semibold text-gray-900 mb-4">
           즐겨찾기 업무 <span class="text-gray-500">({{ filteredFavoriteTasks.length }}개)</span>
         </h2>

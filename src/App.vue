@@ -6,6 +6,7 @@ import Sidebar from './components/Sidebar.vue';
 import BoardModal from './components/BoardModal.vue';
 import ProfileModal from './components/ProfileModal.vue';
 import AlertModal from './components/AlertModal.vue';
+import ConfirmModal from './components/ConfirmModal.vue';
 import { useKanbanStore } from './stores/kanbanStore';
 
 const store = useKanbanStore();
@@ -25,6 +26,11 @@ const isProfileModalOpen = ref(false);
 const isAlertOpen = ref(false);
 const alertTitle = ref('알림');
 const alertMessage = ref('');
+const isConfirmOpen = ref(false);
+const confirmTitle = ref('확인');
+const confirmMessage = ref('');
+const confirmAction = ref(null);
+const confirmType = ref('primary');
 
 // Check if current route is login page
 const isLoginPage = computed(() => route.name === 'Login');
@@ -33,6 +39,22 @@ const showAlert = (message, title = '알림') => {
   alertTitle.value = title;
   alertMessage.value = message;
   isAlertOpen.value = true;
+};
+
+const showConfirm = (message, title = '확인', action, type = 'primary') => {
+  confirmTitle.value = title;
+  confirmMessage.value = message;
+  confirmAction.value = action;
+  confirmType.value = type;
+  isConfirmOpen.value = true;
+};
+
+const handleConfirm = () => {
+  if (confirmAction.value) {
+    confirmAction.value();
+  }
+  isConfirmOpen.value = false;
+  confirmAction.value = null;
 };
 
 onMounted(async () => {
@@ -55,10 +77,10 @@ const handleRegister = async (name, email, password, callback) => {
 };
 
 const handleLogout = () => {
-  if (window.confirm('정말 로그아웃하시겠습니까?')) {
+  showConfirm('정말 로그아웃하시겠습니까?', '로그아웃', () => {
     store.logoutUser();
     router.push('/login');
-  }
+  }, 'danger');
 };
 
 // Navigation Handlers
@@ -92,11 +114,12 @@ const getBoardTitle = (id) => {
 }
 
 const handleDeleteBoard = async (boardId) => {
-  if (!window.confirm(`정말 '${getBoardTitle(boardId)}' 보드를 삭제하시겠습니까?`)) return;
-  
-  await store.deleteBoard(boardId);
-  router.push('/');
-  showAlert('보드가 삭제되었습니다.', '완료');
+  const boardTitle = getBoardTitle(boardId);
+  showConfirm(`정말 '${boardTitle}' 보드를 삭제하시겠습니까?`, '보드 삭제', async () => {
+    await store.deleteBoard(boardId);
+    router.push('/');
+    showAlert('보드가 삭제되었습니다.', '완료');
+  }, 'danger');
 };
 
 const handleSaveBoard = async (board) => {
@@ -118,21 +141,11 @@ const handleBoardClick = (boardId) => {
 };
 
 const handleTaskClick = (task) => {
-  const board = store.boards.find((b) => b.id === task.boardId);
-  if (!board) {
-    alert('보드를 찾을 수 없습니다.');
+  const check = store.checkBoardAccess(task.boardId);
+  if (!check.allowed) {
+    showAlert(check.error || '접근 권한이 없습니다.', '오류');
     return;
   }
-  
-  // Access control check (could be moved to guard or store)
-  const isCreator = board.createdBy === currentUser.value?.email;
-  const isMember = board.members?.some((member) => member.email === currentUser.value?.email);
-
-  if (!isCreator && !isMember) {
-    alert('이 보드에 접근할 권한이 없습니다.');
-    return;
-  }
-
   router.push(`/board/${task.boardId}`);
 };
 
@@ -167,11 +180,12 @@ const handleTaskClick = (task) => {
 
     <!-- 모달 컴포넌트들 -->
     <BoardModal
+      v-if="currentUser"
       :board="editingBoard"
       :is-open="isBoardModalOpen"
       :is-new-board="isNewBoard"
       :available-users="registeredUsers"
-      :current-user-email="currentUser?.email"
+      :current-user-email="currentUser?.email || ''"
       @close="() => {
         isBoardModalOpen = false;
         editingBoard = null;
@@ -193,6 +207,15 @@ const handleTaskClick = (task) => {
       :title="alertTitle"
       :message="alertMessage"
       @close="isAlertOpen = false"
+    />
+
+    <ConfirmModal
+      :is-open="isConfirmOpen"
+      :title="confirmTitle"
+      :message="confirmMessage"
+      :type="confirmType"
+      @close="isConfirmOpen = false"
+      @confirm="handleConfirm"
     />
   </div>
 </template>
