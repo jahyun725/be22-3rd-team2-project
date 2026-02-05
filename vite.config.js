@@ -21,6 +21,7 @@ export default defineConfig(({ mode }) => {
       outDir: 'build',
     },
     server: {
+      host: true,
       port: 3000,
       open: true,
       // API 프록시 설정: /api로 시작하는 요청을 백엔드 서버로 전달
